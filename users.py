@@ -8,10 +8,11 @@ class User(BaseModel):
     name:str
     surname:str
     url:str
+    age:int
 
 users_list=[User(id=1,name="maikol",surname="perdomo",url="maikol.dev",age=25),
             User(id=2,name= "huno", surname= "shan", url= "shan.dev",age=41),
-            User(id=3,name="murk", surname="hansolo", url=21)]
+            User(id=3,name="murk", surname="hansolo", url="murk.com",age=18)]
 
 @app.get("/usersjson")
 async def usersjson():
@@ -38,12 +39,30 @@ async def user(id:int):
 async def userquery(id:int):
     return searchuser_id(id)
 
+#Post creates a new user if it doesn't exist
+
 @app.post("/user/")
 async def user(user:User):
     if type(searchuser_id(user.id))==User:
          return {"error":"user already registered"}
     else:
         users_list.append(user)
+        return user
+
+#Put updates an entire user or just some parts of it
+
+@app.put("/user/")
+async def user(user:User):
+    found=False
+    for index,saved_user in enumerate(users_list):
+        if saved_user.id==user.id:
+            users_list[index]=user
+            found=True
+
+    if found:
+        return user
+    else:
+        return "User not found"
 
 def searchuser_id(id:int):
     users= filter(lambda user:user.id==id,users_list)
