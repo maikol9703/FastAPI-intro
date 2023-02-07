@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException
 from pydantic import BaseModel
 
 app=FastAPI()
@@ -25,33 +25,34 @@ async def users():
 
 #Path search, demands an id
 
-@app.get("/user/{id}")
+@app.get("/user/{id}",status_code=201)
 async def user(id:int):
     users= filter(lambda user:user.id==id,users_list)
     try:
         return list(users)[0]
     except:
-        return {"error":"user not found"}
+        raise HTTPException(status_code=400, detail="user not found")
 
 #Query search, look up something adding /?<example>=<value>
 
-@app.get("/userquery")
+@app.get("/userquery",status_code=201)
 async def userquery(id:int):
     return searchuser_id(id)
+    
 
-#Post creates a new user if it doesn't exist
+#Post, creates a new user if it doesn't exist
 
-@app.post("/user/")
+@app.post("/user/",status_code=201)
 async def user(user:User):
     if type(searchuser_id(user.id))==User:
-         return {"error":"user already registered"}
+         raise  HTTPException(status_code=404, detail="user already registered")
     else:
         users_list.append(user)
         return user
 
-#Put updates an entire user or just some parts of it
+#Put, updates an entire user or just some parts of it
 
-@app.put("/user/")
+@app.put("/user/",status_code=201)
 async def user(user:User):
     found=False
     for index,saved_user in enumerate(users_list):
@@ -62,11 +63,11 @@ async def user(user:User):
     if found:
         return user
     else:
-        return {"error":"User not found"}
+        raise HTTPException(status_code=400,detail="User not updated")
 
 #Delete, deletes an user if found
 
-@app.delete("/user/{id}")
+@app.delete("/user/{id}",status_code=201)
 async def user(id:int):
     found=False
     for index,saved_user in enumerate(users_list):
@@ -76,11 +77,11 @@ async def user(id:int):
             return "User deleted succesfully"
 
     if not found:
-        return {"error":"user hasn't been deleted"}
+        raise HTTPException(status_code=404,detail="user hasn't been deleted")
 
 def searchuser_id(id:int):
     users= filter(lambda user:user.id==id,users_list)
     try:
         return list(users)[0]
     except:
-        return {"error":"user not found"}
+        raise HTTPException(status_code=400,detail="user not found")
