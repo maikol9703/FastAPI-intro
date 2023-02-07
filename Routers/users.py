@@ -1,7 +1,7 @@
 from fastapi import APIRouter,HTTPException
 from pydantic import BaseModel
 
-router=APIRouter()
+router=APIRouter(prefix="/user",tags=["user"],responses={404:{"message":"page not found"}})
 
 class User(BaseModel):
     id:int
@@ -25,7 +25,7 @@ async def users():
 
 #Path search, demands an id
 
-@router.get("/user/{id}",status_code=201)
+@router.get("/{id}",status_code=201)
 async def user(id:int):
     users= filter(lambda user:user.id==id,users_list)
     try:
@@ -42,7 +42,7 @@ async def userquery(id:int):
 
 #Post, creates a new user if it doesn't exist
 
-@router.post("/user/",status_code=201)
+@router.post("/",status_code=201)
 async def user(user:User):
     if type(searchuser_id(user.id))==User:
          raise  HTTPException(status_code=404, detail="user already registered")
@@ -52,7 +52,7 @@ async def user(user:User):
 
 #Put, updates an entire user or just some parts of it
 
-@router.put("/user/",status_code=201)
+@router.put("/",status_code=201)
 async def user(user:User):
     found=False
     for index,saved_user in enumerate(users_list):
@@ -67,7 +67,7 @@ async def user(user:User):
 
 #Delete, deletes an user if found
 
-@router.delete("/user/{id}",status_code=201)
+@router.delete("/{id}",status_code=201)
 async def user(id:int):
     found=False
     for index,saved_user in enumerate(users_list):
