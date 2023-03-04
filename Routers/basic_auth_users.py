@@ -1,4 +1,4 @@
-from fastapi import FastAPI,HTTPException,Depends
+from fastapi import FastAPI,HTTPException,Depends,status
 from pydantic import BaseModel
 from fastapi.security import OAuth2PasswordRequestFormStrict,OAuth2AuthorizationCodeBearer
 
@@ -36,7 +36,7 @@ user_db={
 def search_user(username:str):
     if username in user_db:
         return UserDB(user_db[username])
-    
+
 @app.post("/login")
 async def login(form:OAuth2PasswordRequestFormStrict=Depends()):
     user_db=user_db.get(form.username)
@@ -50,3 +50,14 @@ async def login(form:OAuth2PasswordRequestFormStrict=Depends()):
     
     #if user exists it receives an access token whitch keeps the session open
     return {"access_token":user.username,"token_type":"bearer"}
+
+#funtion to authenticate access token
+#import status to get more info for status codes
+async def current_me(token: str = Depends(oauth)):
+    user= search_user(token)
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Sorry, you don't have access to this info")
+
+#retrieve data from the user
+@app.get("user/me")
+async def 
