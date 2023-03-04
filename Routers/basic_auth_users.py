@@ -1,11 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,HTTPException,Depends
 from pydantic import BaseModel
+from fastapi.security import OAuth2PasswordRequestFormStrict,OAuth2AuthorizationCodeBearer
+
+app=FastAPI()
+oauth=OAuth2AuthorizationCodeBearer(tokenUrl="login")
 
 class User(BaseModel):
     fullname: str
     username: str
     email: str
     disabled: bool
+
+#inherits User class instances
+
+class UserDB(User):
+    password: str
 
 user_db={
     "maikolp":{
@@ -21,6 +30,23 @@ user_db={
         "email":"miguelp@api.com",
         "disabled": True,
         "password":"4321"
-    }
-     
+    } 
 }
+
+def search_user(username:str):
+    if username in user_db:
+        return UserDB(user_db[username])
+    
+@app.post("/login")
+async def login(form:OAuth2PasswordRequestFormStrict=Depends()):
+    user_db=user_db.get(form.username)
+    if not user_db:
+        raise HTTPException(status_code=400,detail="user not found")
+    
+    #user has a json structure from users_db
+    user=search_user(form.username)
+    if not form.password==user.password:
+        raise HTTPException(status_code=400,detail=f"incorrect password for {form.username}")
+    
+    #if user exists it receives an access token whitch keeps the session open
+    return {"access_token":user.username,"token_type":"bearer"}
